@@ -26,7 +26,7 @@ jobs:
           command: curl -L -s ${GORELEASER_URL} | sudo tar zxvf - -C /usr/local/bin
       - run:
           name: Release
-          command: /usr/local/bin/goreleaser
+          command: goreleaser
         
 
 workflows:
@@ -37,7 +37,7 @@ workflows:
           filters:
             tags:
               only: /.*/
-      - deploy:
+      - package:
           requires:
             - build
           filters:
