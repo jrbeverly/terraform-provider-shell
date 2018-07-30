@@ -37,11 +37,11 @@ workflows:
           filters:
             tags:
               only: /.*/
-      - package:
+      - deploy:
           requires:
             - build
           filters:
-            branches:
-              ignore: /.*/
             tags:
               only: /.*/
+            branches:
+              ignore: /.*/
