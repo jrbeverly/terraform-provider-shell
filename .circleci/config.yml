@@ -21,12 +21,12 @@ jobs:
       - checkout
       - run:
           environment:
-            GORELEASER_URL: "https://github.com/goreleaser/goreleaser/releases/download/v0.82.1/goreleaser_Linux_arm64.tar.gz"
+            GORELEASER_URL: "https://github.com/goreleaser/goreleaser/releases/download/v0.82.1/goreleaser_Linux_x86_64.tar.gz"
           name: Download goreleaser
           command: curl -L -s ${GORELEASER_URL} | sudo tar zxvf - -C /usr/local/bin
       - run:
           name: Release
-          command: goreleaser
+          command: /usr/local/bin/goreleaser
         
 
 workflows:
