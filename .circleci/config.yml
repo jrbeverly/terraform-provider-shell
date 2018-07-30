@@ -34,9 +34,9 @@ workflows:
   ci-workflow:
     jobs:
       - build
-  deploy:
-    jobs:
       - package:
+          requires:
+            - build
           filters:
             tags:
               only: /^v[0-9]+(\.[0-9]+)*$/
