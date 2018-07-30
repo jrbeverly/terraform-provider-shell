@@ -27,6 +27,16 @@ jobs:
       - run:
           name: Release
           command: goreleaser
-    filters:
-      tags:
-        only: /^v[0-9]+(\.[0-9]+)*$/
+        
+
+workflows:
+  version: 2
+  ci-workflow:
+    jobs:
+      - build
+  deploy:
+    jobs:
+      - package:
+          filters:
+            tags:
+              only: /^v[0-9]+(\.[0-9]+)*$/
