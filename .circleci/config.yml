@@ -12,7 +12,10 @@ jobs:
           command: go get -v -t -d
       - run:
           name: Build
-          command: go build
+          command: go build -v
+      - run:
+          name: Test
+          command: go test -v -race ./...
   package:
     docker:
       - image: circleci/golang:1.9
@@ -30,7 +33,7 @@ jobs:
       - run:
           name: Release
           command: /usr/local/bin/goreleaser
-        
+
 
 workflows:
   version: 2
