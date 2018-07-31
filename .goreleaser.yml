@@ -3,7 +3,7 @@ before:
   - go get -v -t -d
 builds:
 - main: main.go
-  binary: terraform-provider-shell-{{.Version}}
+  binary: terraform-provider-shell-v{{.Version}}
   goos:
     - linux
     - windows
