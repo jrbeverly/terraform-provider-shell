@@ -6,3 +6,8 @@ builds:
   - windows
   goarch:
   - amd64
+s3:
+-
+  bucket: d2l-terraform-registry
+  region: us-east-1
+  folder: "providers/{{.Name}}/{{.Version}}"
