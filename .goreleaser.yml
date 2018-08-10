@@ -8,6 +8,7 @@ builds:
   - amd64
 s3:
 -
+  name: registry
   bucket: d2l-terraform-registry
   region: us-east-1
   folder: "providers/{{.Name}}/{{.Version}}"
