@@ -8,4 +8,9 @@ builds:
     - linux
     - windows
   goarch:
-    - amd64
+  - amd64
+s3:
+-
+  bucket: d2l-terraform-registry
+  region: us-east-1
+  folder: "providers/terraform-provider-shell/{{.Version}}"
