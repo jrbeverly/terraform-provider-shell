@@ -10,4 +10,4 @@ s3:
 -
   bucket: d2l-terraform-registry
   region: us-east-1
-  folder: "providers/{{.BinaryName}}/{{.Version}}"
+  folder: "providers/terraform-provider-shell/{{.Version}}"
