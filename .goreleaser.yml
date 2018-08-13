@@ -1,9 +1,12 @@
-# This is an example goreleaser.yaml file with some sane defaults.
-# Make sure to check the documentation at http://goreleaser.com
+before:
+  hooks:
+  - go get -v -t -d
 builds:
-- goos:
-  - linux
-  - windows
+- main: main.go
+  binary: terraform-provider-shell_v{{.Version}}
+  goos:
+    - linux
+    - windows
   goarch:
   - amd64
 archive:
