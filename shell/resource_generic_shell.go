@@ -44,27 +44,53 @@ func resourceGenericShellCreate(d *schema.ResourceData, meta interface{}) error 
 	config := meta.(*Config)
 
 	wd := config.WorkingDirectory
-	command, err := interpolateCommand(config.CreateCommand, config.CreateParameters, argumentsAsStrings(d))
+	command, err := interpolateCommand(config.CreateCommand, config.CreateParameters, "", argumentsAsStrings(d))
 	if err != nil {
 		return err
 	}
 	log.Printf("[DEBUG] Creating generic resource: %s", command)
-	_, err = runCommand(command, wd)
+	output, err := runCommand(command, wd)
 	if err != nil {
 		return err
 	}
 
-	d.SetId(hash(command))
+	outputs := readOutput(output)
+	d.SetId(outputs["id"])
 	log.Printf("[INFO] Created generic resource: %s", d.Id())
 
 	return resourceGenericShellRead(d, meta)
+}
+
+func readOutput(output string) map[string]string {
+	outputs := make(map[string]string)
+	split := strings.Split(output, "\n")
+	for _, varline := range split {
+		log.Printf("[DEBUG] Generic resource read line: %s", varline)
+
+		if varline == "" {
+			continue
+		}
+
+		pos := strings.Index(varline, ":")
+		if pos == -1 {
+			log.Printf("[INFO] Generic, ignoring line without equal sign: \"%s\"", varline)
+			continue
+		}
+
+		key := strings.TrimSpace(varline[:pos])
+		value := strings.TrimSpace(varline[pos+1:])
+		log.Printf("[DEBUG] Generic: \"%s\" = \"%s\"", key, value)
+		outputs[key] = value
+	}
+
+	return outputs
 }
 
 func resourceGenericShellRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 
 	wd := config.WorkingDirectory
-	command, err := interpolateCommand(config.ReadCommand, config.ReadParameters, argumentsAsStrings(d))
+	command, err := interpolateCommand(config.ReadCommand, config.ReadParameters, d.Id(), argumentsAsStrings(d))
 	if err != nil {
 		return err
 	}
@@ -76,26 +102,8 @@ func resourceGenericShellRead(d *schema.ResourceData, meta interface{}) error {
 		return nil
 	}
 
-	outputs := make(map[string]string)
-	split := strings.Split(output, "\n")
-	for _, varline := range split {
-		log.Printf("[DEBUG] Generic resource read line: %s", varline)
-
-		if varline == "" {
-			continue
-		}
-
-		pos := strings.Index(varline, "=")
-		if pos == -1 {
-			log.Printf("[INFO] Generic, ignoring line without equal sign: \"%s\"", varline)
-			continue
-		}
-
-		key := varline[:pos]
-		value := varline[pos+1:]
-		log.Printf("[DEBUG] Generic: \"%s\" = \"%s\"", key, value)
-		outputs[key] = value
-	}
+	outputs := readOutput(output)
+	d.SetId(outputs["id"])
 	d.Set("output", outputs)
 
 	return nil
@@ -105,7 +113,7 @@ func resourceGenericShellDelete(d *schema.ResourceData, meta interface{}) error 
 	config := meta.(*Config)
 
 	wd := config.WorkingDirectory
-	command, err := interpolateCommand(config.DeleteCommand, config.DeleteParameters, argumentsAsStrings(d))
+	command, err := interpolateCommand(config.DeleteCommand, config.DeleteParameters, d.Id(), argumentsAsStrings(d))
 	if err != nil {
 		return err
 	}
@@ -127,9 +135,10 @@ func argumentsAsStrings(d *schema.ResourceData) map[string]string {
 	return args
 }
 
-func interpolateCommand(command string, parameters []interface{}, arguments map[string]string) (string, error) {
+func interpolateCommand(command string, parameters []interface{}, id string, arguments map[string]string) (string, error) {
+	newCommand := strings.Replace(command, "#ID", id, -1)
 	if len(parameters) == 0 {
-		return command, nil
+		return newCommand, nil
 	}
 
 	inputArgs := make([]interface{}, len(parameters))
@@ -137,11 +146,11 @@ func interpolateCommand(command string, parameters []interface{}, arguments map[
 		if v, ok := arguments[p.(string)]; ok {
 			inputArgs[i] = v
 		} else {
-			return "", fmt.Errorf("Error interpolating command '%s', parameter '%s' missing.", command, p)
+			return "", fmt.Errorf("Error interpolating command '%s', parameter '%s' missing.", newCommand, p)
 		}
 	}
-	log.Printf("[DEBUG] Interpolating, command '%s' and args: '%v'", command, inputArgs)
-	newCommand := fmt.Sprintf(command, inputArgs...)
+	log.Printf("[DEBUG] Interpolating, command '%s' and args: '%v'", newCommand, inputArgs)
+	newCommand = fmt.Sprintf(newCommand, inputArgs...)
 
 	pos := strings.Index(newCommand, "%!")
 	if pos != -1 {
