@@ -1,4 +1,4 @@
-# Terraform shell provider
+# Terraform Shell provider
 
 This is a terraform provider that lets you wrap shell based tools to [Terraform](https://terraform.io/) resources in a simple way.
 
