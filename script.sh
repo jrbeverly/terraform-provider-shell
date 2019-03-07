@@ -1,0 +1,1 @@
+echo "{\"id\":\"1\",\"hello\":\"${hello}\",\"date\":\"$(date +%Y%m%d%H%M%S)\"}"
