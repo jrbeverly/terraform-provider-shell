@@ -9,10 +9,7 @@ build: fmtcheck
 
 build/win: fmtcheck
 	GOOS=windows go build
-
-build/tf: fmtcheck
-	GOOS=windows go build -o terraform.d/plugins/windows_amd64/terraform-provider-shell.exe
-
+	
 get:
 	go get -v -d
 
