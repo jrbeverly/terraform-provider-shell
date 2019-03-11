@@ -9,7 +9,7 @@ build: fmtcheck
 
 build/win: fmtcheck
 	GOOS=windows go build
-	
+
 get:
 	go get -v -d
 
