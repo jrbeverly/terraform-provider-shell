@@ -1,95 +1,63 @@
-# Terraform Shell provider
+Terraform Provider
+==================
 
-This is a terraform provider that lets you wrap shell based tools to [Terraform](https://terraform.io/) resources in a simple way.
+- Website: https://www.terraform.io
+- [![Gitter chat](https://badges.gitter.im/hashicorp-terraform/Lobby.png)](https://gitter.im/hashicorp-terraform/Lobby)
+- Mailing list: [Google Groups](http://groups.google.com/group/terraform-tool)
 
-There is also [exec](https://github.com/gosuri/terraform-exec-provider) provider, but it only implements `Create` CRUD operation.
+<img src="https://cdn.rawgit.com/hashicorp/terraform-website/master/content/source/assets/images/logo-hashicorp.svg" width="600px">
 
-## Naming
+Requirements
+------------
 
-The naming of this provider has been hard. The provider is about wrapping functionality by running shell scripts. Originally the name was `generic_shell_wrapper`, but currently the name is just `shell`. The naming in code is still inconsistent.
+-	[Terraform](https://www.terraform.io/downloads.html) 0.10.x
+-	[Go](https://golang.org/doc/install) 1.8 (to build the provider plugin)
 
-## Installing
+Building The Provider
+---------------------
 
-[Copied from the Terraform documentation](https://www.terraform.io/docs/plugins/basics.html):
-> To install a plugin, put the binary somewhere on your filesystem, then configure Terraform to be able to find it. The configuration where plugins are defined is ~/.terraformrc for Unix-like systems and %APPDATA%/terraform.rc for Windows.
+Clone repository to: `$GOPATH/src/github.com/Brightspace/terraform-provider-shell`
 
-Build it from source (instructions below) and move the binary `terraform-provider-shell` to `bin/` and it should work.
-
-## Using the provider
-
-First, an simple example that is used in tests too
-
-```hcl
-provider "shell" {
-  create_command = "echo \"hi\" > test_file"
-  read_command = "awk '{print \"out=\" $0}' test_file"
-  delete_command = "rm test_file"
-}
-
-resource "shell_resource" "test" {
-}
+```sh
+$ mkdir -p $GOPATH/src/github.com/Brightspace; cd $GOPATH/src/github.com/Brightspace
+$ git clone git@github.com:Brightspace/terraform-provider-shell
 ```
 
-```console
-$ terraform plan
-$ terraform apply
-$ terraform destroy
+Enter the provider directory and build the provider
+
+```sh
+$ cd $GOPATH/src/github.com/Brightspace/terraform-provider-shell
+$ make build
 ```
 
-To create a more complete example add this to the sample example file
+Using the provider
+----------------------
+## Fill in for each provider
 
-```hcl
-provider "shell" {
-   alias = "write_to_file"
-   create_command = "echo \"%s\" > %s"
-   create_parameters = [ "input", "file" ]
-   read_command = "awk '{print \"out=\" $0}' %s"
-   read_parameters = [ "file" ]
-   delete_command = "rm %s"
-   delete_parameters = [ "file" ]
-}
+Developing the Provider
+---------------------------
 
-resource "shell_resource" "filetest" {
-  provider = "shell.write_to_file"
-  arguments {
-    input = "this to the file"
-    file = "test_file2"
-  }
-}
+If you wish to work on the provider, you'll first need [Go](http://www.golang.org) installed on your machine (version 1.8+ is *required*). You'll also need to correctly setup a [GOPATH](http://golang.org/doc/code.html#GOPATH), as well as adding `$GOPATH/bin` to your `$PATH`.
+
+To compile the provider, run `make build`. This will build the provider and put the provider binary in the `$GOPATH/bin` directory.
+
+```sh
+$ make bin
+...
+$ $GOPATH/bin/terraform-provider-shell
+...
 ```
 
-Parameters can by used to change the resources.
+In order to test the provider, you can simply run `make test`.
 
-## Building from source
-
-1.  [Install Go](https://golang.org/doc/install) on your machine
-2.  [Set up Gopath](https://golang.org/doc/code.html)
-3.  `git clone` this repository into `$GOPATH/src/github.com/toddnni/terraform-provider-shell`
-4.  Get the dependencies. Run `go get`
-6.  `make install`. You will now find the
-    binary at `$GOPATH/bin/terraform-provider-shell`.
-
-## Running acceptance tests
-
-```console
-make test
+```sh
+$ make test
 ```
 
-## Known Problems
+In order to run the full suite of Acceptance tests, run `make testacc`.
 
-* The provider won't support `Update` CRUD operation.
-* The provider won't print output of the commands.
-* The provider will error instead of removing the resource if the delete command fails. However, this is a safe default.
-* Changes in provider do not issue resource rebuilds. Please parametrize all parameters that will change.
+*Note:* Acceptance tests create real resources, and often cost money to run.
 
-## Author
-
-* Toni Ylenius
-
-The structure is inspired from the [Softlayer](https://github.com/finn-no/terraform-provider-softlayer) and [libvirt](https://github.com/dmacvicar/terraform-provider-libvirt) Terraform provider sources.
-
-Some code has been adapted from local-exec provisioner from terraform core.
-
-## License
-
-* MIT, See LICENSE file
+```sh
+$ make testacc
+```
