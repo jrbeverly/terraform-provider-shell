@@ -22,6 +22,7 @@ func resourceExternal() *schema.Resource {
 			"create": {
 				Type:     schema.TypeList,
 				Required: true,
+				ForceNew: true,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
@@ -29,6 +30,7 @@ func resourceExternal() *schema.Resource {
 			"update": {
 				Type:     schema.TypeList,
 				Required: true,
+				ForceNew: true,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
@@ -36,6 +38,7 @@ func resourceExternal() *schema.Resource {
 			"delete": {
 				Type:     schema.TypeList,
 				Required: true,
+				ForceNew: true,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
@@ -43,6 +46,7 @@ func resourceExternal() *schema.Resource {
 			"read": {
 				Type:     schema.TypeList,
 				Required: true,
+				ForceNew: true,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
@@ -51,12 +55,14 @@ func resourceExternal() *schema.Resource {
 			"working_dir": {
 				Type:     schema.TypeString,
 				Optional: true,
+				ForceNew: true,
 				Default:  "",
 			},
 
 			"query": {
 				Type:     schema.TypeMap,
 				Optional: true,
+				ForceNew: true,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
