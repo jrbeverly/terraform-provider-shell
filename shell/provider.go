@@ -14,6 +14,20 @@ func Provider() terraform.ResourceProvider {
 				DefaultFunc: schema.EnvDefaultFunc("PWD", nil),
 				Description: "The working directory where to run.",
 			},
+			"variables": {
+				Type:     schema.TypeMap,
+				Optional: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
+			"prune": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
 		},
 
 		ResourcesMap: map[string]*schema.Resource{
@@ -25,8 +39,16 @@ func Provider() terraform.ResourceProvider {
 }
 
 func providerConfigure(d *schema.ResourceData) (interface{}, error) {
+	pruneRaw := d.Get("prune").([]interface{})
+	prune := make([]string, len(pruneRaw))
+	for i, vI := range pruneRaw {
+		prune[i] = vI.(string)
+	}
+
 	config := Config{
 		WorkingDirectory: d.Get("working_directory").(string),
+		Variables:        d.Get("variables").(map[string]interface{}),
+		Prune:            prune,
 	}
 
 	return &config, nil
