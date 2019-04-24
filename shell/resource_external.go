@@ -14,7 +14,7 @@ import (
 func resourceExternal() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceExternalCreate,
-		Update: resourceExternalUpdate,
+		// Update: resourceExternalUpdate,
 		Read:   resourceExternalRead,
 		Delete: resourceExternalDelete,
 
