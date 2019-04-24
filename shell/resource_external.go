@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/hashicorp/terraform/helper/schema"
 )
@@ -83,8 +84,9 @@ func convertToEnvVars(args map[string]interface{}) []string {
 	return vars
 }
 
-func runCommand(programI []interface{}, workingDir string, query map[string]interface{}, id string) (map[string]interface{}, error) {
+func runCommand(programI []interface{}, workingDir string, query map[string]interface{}, id string, prune []string) (map[string]interface{}, error) {
 	log.Printf("[INFO] Number of command args [%d]", len(programI))
+	log.Printf("[INFO] Number of command env vars [%d]", len(query))
 	program := make([]string, len(programI))
 	for i, vI := range programI {
 		log.Printf("[INFO] Program [%d]: %s", i, vI.(string))
@@ -100,7 +102,12 @@ func runCommand(programI []interface{}, workingDir string, query map[string]inte
 	cmd.Dir = workingDir
 	cmd.Env = append(env, fmt.Sprintf("TF_ID=%s", id))
 
-	resultJson, err := cmd.Output()
+	resultByte, err := cmd.Output()
+	resultJson := string(resultByte)
+	for _, txt := range prune {
+		resultJson = strings.Replace(resultJson, txt, "", -1)
+	}
+	resultJson = strings.TrimSpace(resultJson)
 	log.Printf("[INFO] result %s", resultJson)
 	if err != nil {
 		if exitErr, ok := err.(*exec.ExitError); ok {
@@ -113,7 +120,7 @@ func runCommand(programI []interface{}, workingDir string, query map[string]inte
 		}
 	}
 	var decoded interface{}
-	err = json.Unmarshal(resultJson, &decoded)
+	err = json.Unmarshal([]byte(resultJson), &decoded)
 	if err != nil {
 		return nil, fmt.Errorf("command %q produced invalid JSON: %s", program[0], err)
 	}
@@ -123,11 +130,20 @@ func runCommand(programI []interface{}, workingDir string, query map[string]inte
 }
 
 func resourceExternalCreate(d *schema.ResourceData, meta interface{}) error {
+	config := meta.(*Config)
+	env_vars := make(map[string]interface{})
 	programI := d.Get("create").([]interface{})
 	workingDir := d.Get("working_dir").(string)
 	query := d.Get("query").(map[string]interface{})
 
-	result, err := runCommand(programI, workingDir, query, d.Id())
+	for k, v := range query {
+		env_vars[k] = v
+	}
+	for k, v := range config.Variables {
+		env_vars[k] = v
+	}
+
+	result, err := runCommand(programI, workingDir, env_vars, d.Id(), config.Prune)
 	if err != nil {
 		return fmt.Errorf("create: %s", err)
 	}
@@ -140,12 +156,21 @@ func resourceExternalCreate(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceExternalRead(d *schema.ResourceData, meta interface{}) error {
+	config := meta.(*Config)
+	env_vars := make(map[string]interface{})
 	programI := d.Get("read").([]interface{})
 	log.Printf("[INFO] Number of command args [%d]", len(programI))
 	workingDir := d.Get("working_dir").(string)
 	query := d.Get("query").(map[string]interface{})
 
-	result, err := runCommand(programI, workingDir, query, d.Id())
+	for k, v := range query {
+		env_vars[k] = v
+	}
+	for k, v := range config.Variables {
+		env_vars[k] = v
+	}
+
+	result, err := runCommand(programI, workingDir, env_vars, d.Id(), config.Prune)
 	if err != nil {
 		log.Printf("[INFO] Error occurred while retrieving resource %s", d.Id())
 		d.SetId("")
@@ -164,11 +189,20 @@ func resourceExternalRead(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 func resourceExternalUpdate(d *schema.ResourceData, meta interface{}) error {
+	config := meta.(*Config)
+	env_vars := make(map[string]interface{})
 	programI := d.Get("update").([]interface{})
 	workingDir := d.Get("working_dir").(string)
 	query := d.Get("query").(map[string]interface{})
 
-	result, err := runCommand(programI, workingDir, query, d.Id())
+	for k, v := range query {
+		env_vars[k] = v
+	}
+	for k, v := range config.Variables {
+		env_vars[k] = v
+	}
+
+	result, err := runCommand(programI, workingDir, env_vars, d.Id(), config.Prune)
 	if err != nil {
 		return fmt.Errorf("update: %s", err)
 	}
@@ -179,11 +213,20 @@ func resourceExternalUpdate(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 func resourceExternalDelete(d *schema.ResourceData, meta interface{}) error {
+	config := meta.(*Config)
+	env_vars := make(map[string]interface{})
 	programI := d.Get("delete").([]interface{})
 	workingDir := d.Get("working_dir").(string)
 	query := d.Get("query").(map[string]interface{})
 
-	result, err := runCommand(programI, workingDir, query, d.Id())
+	for k, v := range query {
+		env_vars[k] = v
+	}
+	for k, v := range config.Variables {
+		env_vars[k] = v
+	}
+
+	result, err := runCommand(programI, workingDir, env_vars, d.Id(), config.Prune)
 	if err != nil {
 		return fmt.Errorf("delete: %s", err)
 	}
