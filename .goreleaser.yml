@@ -12,19 +12,22 @@ builds:
     - windows
   goarch:
   - amd64
+archives:
+-
+  format: zip
 checksum:
   name_template: 'checksums.txt'
 changelog:
   skip: true
 release:
   github:
-    owner: Brightspace
+    owner: jrbeverly
     name: terraform-provider-shell
   prerelease: auto
   name_template: "v{{.Version}}"
 
-blobs:
+s3:
 -
-  provider: s3
   bucket: tfreg
   folder: "ace/providers/{{.ProjectName}}/{{.Version}}"
+  region: "us-east-1"
