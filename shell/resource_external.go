@@ -7,9 +7,13 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 
+	"github.com/go-cmd/cmd"
 	"github.com/hashicorp/terraform/helper/schema"
 )
+
+const MaximumWaitTimeInSeconds = 5 * time.Minute
 
 func resourceExternal() *schema.Resource {
 	return &schema.Resource{
@@ -98,12 +102,28 @@ func runCommand(programI []interface{}, workingDir string, query map[string]inte
 
 	env := convertToEnvVars(query)
 
-	cmd := exec.Command(program[0], program[1:]...)
+	cmd := cmd.NewCmd(program[0], program[1:]...)
 	cmd.Dir = workingDir
 	cmd.Env = append(env, fmt.Sprintf("TF_ID=%s", id))
 
-	resultByte, err := cmd.Output()
-	resultJson := string(resultByte)
+	statusChan := cmd.Start()
+
+	go func() {
+		<-time.After(MaximumWaitTimeInSeconds)
+		cmd.Stop()
+	}()
+
+	status := <-statusChan
+	err := status.Error
+	if err != nil {
+		return nil, fmt.Errorf("Failed during execution %q: %s", program[0], err)
+	}
+
+	if !status.Complete {
+		return nil, fmt.Errorf("Timeout exception on %q", program[0])
+	}
+
+	resultJson := strings.Join(status.Stdout, " ")
 	for _, txt := range prune {
 		resultJson = strings.Replace(resultJson, txt, "", -1)
 	}
