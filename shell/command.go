@@ -23,7 +23,12 @@ const MaximumRetryWaitTimeInSeconds = 15 * time.Minute
 const RetryWaitTimeInSeconds = 30 * time.Second
 const MaximumWaitTimeInSeconds = 5 * time.Minute
 
-func convertToEnvVars(args map[string]interface{}, path string) []string {
+type CmdRunner struct {
+	TemporaryDirectory string
+	RetryMaximum       int
+}
+
+func (run *CmdRunner) convertToEnvVars(args map[string]interface{}, path string) []string {
 	i := 0
 	vars := make([]string, len(args))
 	for key, val := range args {
@@ -35,7 +40,7 @@ func convertToEnvVars(args map[string]interface{}, path string) []string {
 	return vars
 }
 
-func readDataFile(path string) (map[string]interface{}, error) {
+func (run *CmdRunner) readDataFile(path string) (map[string]interface{}, error) {
 	jsonFile, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -58,13 +63,13 @@ func readDataFile(path string) (map[string]interface{}, error) {
 	return result, nil
 }
 
-func TempFileName(prefix, suffix string) string {
+func (run *CmdRunner) TempFileName(prefix, suffix string) string {
 	randBytes := make([]byte, 16)
 	rand.Read(randBytes)
 	return filepath.Join(os.TempDir(), prefix+hex.EncodeToString(randBytes)+suffix)
 }
 
-func runShellCommand(
+func (run *CmdRunner) runShellCommand(
 	programI []interface{},
 	workingDir string,
 	query map[string]interface{},
@@ -72,7 +77,7 @@ func runShellCommand(
 	var result map[string]interface{}
 	err := try.Do(func(ampt int) (bool, error) {
 		var err error
-		result, err = runCmd(programI, workingDir, query, id, ampt)
+		result, err = run.runCmd(programI, workingDir, query, id, ampt)
 		if err != nil {
 			log.Printf("[DEBUG] retrying request: (Attempt: %d/%d, URL: %q)", ampt, 5, err)
 			time.Sleep(RetryWaitTimeInSeconds)
@@ -86,7 +91,7 @@ func runShellCommand(
 	return result, nil
 }
 
-func runCmd(
+func (run *CmdRunner) runCmd(
 	programI []interface{},
 	workingDir string,
 	query map[string]interface{},
@@ -103,8 +108,8 @@ func runCmd(
 		return nil, fmt.Errorf("No command has been provided")
 	}
 
-	data_file := TempFileName("shell-", ".tfjson")
-	env := convertToEnvVars(query, data_file)
+	data_file := run.TempFileName("shell-", ".tfjson")
+	env := run.convertToEnvVars(query, data_file)
 	env = append(env, fmt.Sprintf("TF_RETRY=%s", retry))
 	env = append(env, fmt.Sprintf("TF_ID=%s", id))
 
@@ -151,5 +156,5 @@ func runCmd(
 		}
 	}
 
-	return readDataFile(data_file)
+	return run.readDataFile(data_file)
 }

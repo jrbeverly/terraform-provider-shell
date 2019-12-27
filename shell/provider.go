@@ -1,6 +1,8 @@
 package shell
 
 import (
+	"os"
+
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/terraform"
 )
@@ -32,8 +34,14 @@ func Provider() terraform.ResourceProvider {
 }
 
 func providerConfigure(d *schema.ResourceData) (interface{}, error) {
+	cmd := CmdRunner{
+		TemporaryDirectory: os.TempDir(),
+		RetryMaximum:       5,
+	}
+
 	config := Config{
 		WorkingDirectory: d.Get("working_directory").(string),
+		Runner:           cmd,
 		Variables:        d.Get("variables").(map[string]interface{}),
 	}
 
