@@ -8,11 +8,10 @@ $Item = @{
     id = "1"
 }
 $Result = $Item | ConvertTo-JSON
-Write-Output $Result | Tee-Object here.txt
-# switch($Action) {
-#    "create" { Write-Output $Result; break}
-#    "read" { Get-O365Member; break}
-#    "delete" { Remove-O365Member; break}
-#    "update" { Set-O365Member; break}
-#    "list" { List-O365Member; break}
-# }
+switch($Action) {
+   "create" { Write-Output $Result | Tee-Object here.txt; break}
+   "read" { Get-Content -Path here.txt; break}
+   "delete" { Write-Output $Result; break}
+   "update" { Get-Content -Path here.txt; break}
+   "list" { List-O365Member; break}
+}
