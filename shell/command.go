@@ -69,7 +69,7 @@ func readDataFile(path string) (map[string]interface{}, error) {
 	return result, nil
 }
 
-func runCommand(programI []interface{}, workingDir string, query map[string]interface{}, id string) (map[string]interface{}, error) {
+func runCommand(programI []interface{}, workingDir string, tmpDir string, query map[string]interface{}, id string) (map[string]interface{}, error) {
 	log.Printf("[INFO] Number of command args [%d]", len(programI))
 	log.Printf("[INFO] Number of command env vars [%d]", len(query))
 	program := make([]string, len(programI))
@@ -81,7 +81,7 @@ func runCommand(programI []interface{}, workingDir string, query map[string]inte
 		return nil, fmt.Errorf("No command has been provided")
 	}
 
-	path := "something.data.json"
+	path := fmt.Sprintf("%s/%s", tmpDir, "something.data.json")
 	env := convertToEnvVars(query, path)
 
 	cmd := cmd.NewCmd(program[0], program[1:]...)
