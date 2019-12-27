@@ -22,11 +22,6 @@ const MaximumRetryWaitTimeInSeconds = 15 * time.Minute
 const RetryWaitTimeInSeconds = 30 * time.Second
 const MaximumWaitTimeInSeconds = 5 * time.Minute
 
-func writeInputState(path string, contents []byte) error {
-	err := ioutil.WriteFile(path, contents, 0644)
-	return err
-}
-
 func convertToEnvVars(args map[string]interface{}, path string) []string {
 	i := 0
 	vars := make([]string, len(args))
@@ -68,7 +63,7 @@ func TempFileName(prefix, suffix string) string {
 	return filepath.Join(os.TempDir(), prefix+hex.EncodeToString(randBytes)+suffix)
 }
 
-func runCommand(programI []interface{}, workingDir string, dataFile string, query map[string]interface{}, id string) (map[string]interface{}, error) {
+func runCommand(programI []interface{}, workingDir string, query map[string]interface{}, id string) (map[string]interface{}, error) {
 	log.Printf("[INFO] Number of command args [%d]", len(programI))
 	log.Printf("[INFO] Number of command env vars [%d]", len(query))
 	program := make([]string, len(programI))
@@ -80,7 +75,8 @@ func runCommand(programI []interface{}, workingDir string, dataFile string, quer
 		return nil, fmt.Errorf("No command has been provided")
 	}
 
-	env := convertToEnvVars(query, dataFile)
+	data_file := TempFileName("shell-", ".tfjson")
+	env := convertToEnvVars(query, data_file)
 
 	cmd := cmd.NewCmd(program[0], program[1:]...)
 	cmd.Dir = workingDir
@@ -100,16 +96,16 @@ func runCommand(programI []interface{}, workingDir string, dataFile string, quer
 		return nil, fmt.Errorf("Failed during execution %q: %s\n%s", program[0], err, stderr)
 	}
 
-	if _, err := os.Stat(dataFile); os.IsNotExist(err) {
+	if _, err := os.Stat(data_file); os.IsNotExist(err) {
 		stderr := strings.Join(status.Stderr, "\n")
-		return nil, fmt.Errorf("Output from command was not recorded: %s\n%s", dataFile, stderr)
+		return nil, fmt.Errorf("Output from command was not recorded: %s\n%s", data_file, stderr)
 	}
 
 	if !status.Complete {
 		return nil, fmt.Errorf("Timeout exception on %q", program[0])
 	}
 
-	log.Printf("[INFO] Data file name: %s", dataFile)
+	log.Printf("[INFO] Data file name: %s", data_file)
 	for _, out := range status.Stdout {
 		log.Printf("[INFO] %s", out)
 	}
@@ -125,5 +121,5 @@ func runCommand(programI []interface{}, workingDir string, dataFile string, quer
 		}
 	}
 
-	return readDataFile(dataFile)
+	return readDataFile(data_file)
 }

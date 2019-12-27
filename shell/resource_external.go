@@ -74,7 +74,6 @@ func resourceExternalCreate(d *schema.ResourceData, meta interface{}) error {
 	programI := d.Get("create").([]interface{})
 	workingDir := d.Get("working_dir").(string)
 	query := d.Get("query").(map[string]interface{})
-	data_file := TempFileName("shell", ".tfjson")
 
 	for k, v := range query {
 		env_vars[k] = v
@@ -83,7 +82,7 @@ func resourceExternalCreate(d *schema.ResourceData, meta interface{}) error {
 		env_vars[k] = v
 	}
 
-	result, err := runCommand(programI, workingDir, data_file, env_vars, d.Id())
+	result, err := runCommand(programI, workingDir, env_vars, d.Id())
 	if err != nil {
 		return fmt.Errorf("create: %s", err)
 	}
@@ -102,7 +101,6 @@ func resourceExternalRead(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[INFO] Number of command args [%d]", len(programI))
 	workingDir := d.Get("working_dir").(string)
 	query := d.Get("query").(map[string]interface{})
-	data_file := TempFileName("shell", ".tfjson")
 
 	for k, v := range query {
 		env_vars[k] = v
@@ -111,7 +109,7 @@ func resourceExternalRead(d *schema.ResourceData, meta interface{}) error {
 		env_vars[k] = v
 	}
 
-	result, err := runCommand(programI, workingDir, data_file, env_vars, d.Id())
+	result, err := runCommand(programI, workingDir, env_vars, d.Id())
 	if err != nil {
 		log.Printf("[INFO] Error occurred while retrieving resource %s", d.Id())
 		d.SetId("")
@@ -136,7 +134,6 @@ func resourceExternalUpdate(d *schema.ResourceData, meta interface{}) error {
 	programI := d.Get("update").([]interface{})
 	workingDir := d.Get("working_dir").(string)
 	query := d.Get("query").(map[string]interface{})
-	data_file := TempFileName("shell", ".tfjson")
 
 	for k, v := range query {
 		env_vars[k] = v
@@ -145,7 +142,7 @@ func resourceExternalUpdate(d *schema.ResourceData, meta interface{}) error {
 		env_vars[k] = v
 	}
 
-	result, err := runCommand(programI, workingDir, data_file, env_vars, d.Id())
+	result, err := runCommand(programI, workingDir, env_vars, d.Id())
 	if err != nil {
 		return fmt.Errorf("update: %s", err)
 	}
@@ -162,7 +159,6 @@ func resourceExternalDelete(d *schema.ResourceData, meta interface{}) error {
 	programI := d.Get("delete").([]interface{})
 	workingDir := d.Get("working_dir").(string)
 	query := d.Get("query").(map[string]interface{})
-	data_file := TempFileName("shell", ".tfjson")
 
 	for k, v := range query {
 		env_vars[k] = v
@@ -171,7 +167,7 @@ func resourceExternalDelete(d *schema.ResourceData, meta interface{}) error {
 		env_vars[k] = v
 	}
 
-	result, err := runCommand(programI, workingDir, data_file, env_vars, d.Id())
+	result, err := runCommand(programI, workingDir, env_vars, d.Id())
 	if err != nil {
 		return fmt.Errorf("delete: %s", err)
 	}
