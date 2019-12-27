@@ -14,12 +14,6 @@ func Provider() terraform.ResourceProvider {
 				DefaultFunc: schema.EnvDefaultFunc("PWD", nil),
 				Description: "The working directory where to run.",
 			},
-			"tmp": &schema.Schema{
-				Type:        schema.TypeString,
-				Required:    true,
-				DefaultFunc: schema.EnvDefaultFunc("TMP", nil),
-				Description: "The temporary directory to write terraform files.",
-			},
 			"variables": {
 				Type:     schema.TypeMap,
 				Optional: true,
