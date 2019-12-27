@@ -66,7 +66,7 @@ func (run *CmdRunner) readDataFile(path string) (map[string]interface{}, error) 
 func (run *CmdRunner) TempFileName(prefix, suffix string) string {
 	randBytes := make([]byte, 16)
 	rand.Read(randBytes)
-	return filepath.Join(os.TempDir(), prefix+hex.EncodeToString(randBytes)+suffix)
+	return filepath.Join(run.TemporaryDirectory, prefix+hex.EncodeToString(randBytes)+suffix)
 }
 
 func (run *CmdRunner) runShellCommand(
