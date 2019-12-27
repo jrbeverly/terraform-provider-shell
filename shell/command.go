@@ -6,7 +6,12 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"strings"
 	"time"
+
+	"crypto/rand"
+	"encoding/hex"
+	"path/filepath"
 
 	"github.com/go-cmd/cmd"
 
@@ -16,21 +21,6 @@ import (
 const MaximumRetryWaitTimeInSeconds = 15 * time.Minute
 const RetryWaitTimeInSeconds = 30 * time.Second
 const MaximumWaitTimeInSeconds = 5 * time.Minute
-
-/*
-Commands should be done here:
-	Underlying command for running
-	Commands for each of the lifecycle
-
-How do we handle this?
-	Pass in an environment variable to a files
-		1) Path to terraform state data
-		2) Path to output state
-	Provider directory for TMP dir
-		This is where we will write the path to items
-	This way we don't need to parse the outputs from the commands:
-		'shell' vs 'external' vs 'cmd_exec'
-*/
 
 func writeInputState(path string, contents []byte) error {
 	err := ioutil.WriteFile(path, contents, 0644)
@@ -55,7 +45,10 @@ func readDataFile(path string) (map[string]interface{}, error) {
 		return nil, err
 	}
 
-	byteValue, _ := ioutil.ReadAll(jsonFile)
+	byteValue, err := ioutil.ReadAll(jsonFile)
+	if err != nil {
+		return nil, err
+	}
 
 	defer jsonFile.Close()
 
@@ -69,7 +62,13 @@ func readDataFile(path string) (map[string]interface{}, error) {
 	return result, nil
 }
 
-func runCommand(programI []interface{}, workingDir string, tmpDir string, query map[string]interface{}, id string) (map[string]interface{}, error) {
+func TempFileName(prefix, suffix string) string {
+	randBytes := make([]byte, 16)
+	rand.Read(randBytes)
+	return filepath.Join(os.TempDir(), prefix+hex.EncodeToString(randBytes)+suffix)
+}
+
+func runCommand(programI []interface{}, workingDir string, dataFile string, query map[string]interface{}, id string) (map[string]interface{}, error) {
 	log.Printf("[INFO] Number of command args [%d]", len(programI))
 	log.Printf("[INFO] Number of command env vars [%d]", len(query))
 	program := make([]string, len(programI))
@@ -81,8 +80,7 @@ func runCommand(programI []interface{}, workingDir string, tmpDir string, query 
 		return nil, fmt.Errorf("No command has been provided")
 	}
 
-	path := fmt.Sprintf("%s/%s", tmpDir, "something.data.json")
-	env := convertToEnvVars(query, path)
+	env := convertToEnvVars(query, dataFile)
 
 	cmd := cmd.NewCmd(program[0], program[1:]...)
 	cmd.Dir = workingDir
@@ -98,13 +96,20 @@ func runCommand(programI []interface{}, workingDir string, tmpDir string, query 
 	status := <-statusChan
 	err := status.Error
 	if err != nil {
-		return nil, fmt.Errorf("Failed during execution %q: %s", program[0], err)
+		stderr := strings.Join(status.Stderr, "\n")
+		return nil, fmt.Errorf("Failed during execution %q: %s\n%s", program[0], err, stderr)
+	}
+
+	if _, err := os.Stat(dataFile); os.IsNotExist(err) {
+		stderr := strings.Join(status.Stderr, "\n")
+		return nil, fmt.Errorf("Output from command was not recorded: %s\n%s", dataFile, stderr)
 	}
 
 	if !status.Complete {
 		return nil, fmt.Errorf("Timeout exception on %q", program[0])
 	}
 
+	log.Printf("[INFO] Data file name: %s", dataFile)
 	for _, out := range status.Stdout {
 		log.Printf("[INFO] %s", out)
 	}
@@ -120,5 +125,5 @@ func runCommand(programI []interface{}, workingDir string, tmpDir string, query 
 		}
 	}
 
-	return readDataFile(path)
+	return readDataFile(dataFile)
 }

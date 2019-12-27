@@ -1,7 +1,7 @@
 param(
     [String]$Action
 )
-$ProgressPreference='SilentlyContinue'
+$ErrorActionPreference = "Stop"
 $ConfirmPreference ='None'
 
 $Item = @{
@@ -15,9 +15,8 @@ $Item = @{
 
 $Result = $Item | ConvertTo-JSON
 switch($Action) {
-   "create" { Write-Output $Result | Tee-Object $env:TF_DATA_FILE; break}
+   "create" { Set-Content -Path $env:TF_DATA_FILE -Value $Result; break}
    "read" { Get-Content -Path $env:TF_DATA_FILE; break}
-   "delete" { Write-Output $Result; break}
-   "update" { Get-Content -Path $env:TF_DATA_FILE; break}
-   "list" { List-O365Member; break}
+   "delete" { Set-Content -Path $env:TF_DATA_FILE -Value ""; break}
+   "update" { Set-Content -Path $env:TF_DATA_FILE -Value $Result; break}
 }
