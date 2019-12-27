@@ -57,10 +57,6 @@ func resourceExternal() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
-			"data_file": {
-				Type:     schema.TypeString,
-				Computed: true,
-			},
 			"result": {
 				Type:     schema.TypeMap,
 				Computed: true,
@@ -92,7 +88,6 @@ func resourceExternalCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("create: %s", err)
 	}
 
-	d.Set("data_file", data_file)
 	d.Set("result", result)
 	d.SetId(result["id"].(string))
 	log.Printf("[INFO] Created generic resource: %s", d.Id())
@@ -107,7 +102,7 @@ func resourceExternalRead(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[INFO] Number of command args [%d]", len(programI))
 	workingDir := d.Get("working_dir").(string)
 	query := d.Get("query").(map[string]interface{})
-	data_file := d.Get("data_file").(string)
+	data_file := TempFileName("shell", ".tfjson")
 
 	for k, v := range query {
 		env_vars[k] = v
@@ -141,7 +136,7 @@ func resourceExternalUpdate(d *schema.ResourceData, meta interface{}) error {
 	programI := d.Get("update").([]interface{})
 	workingDir := d.Get("working_dir").(string)
 	query := d.Get("query").(map[string]interface{})
-	data_file := d.Get("data_file").(string)
+	data_file := TempFileName("shell", ".tfjson")
 
 	for k, v := range query {
 		env_vars[k] = v
@@ -167,7 +162,7 @@ func resourceExternalDelete(d *schema.ResourceData, meta interface{}) error {
 	programI := d.Get("delete").([]interface{})
 	workingDir := d.Get("working_dir").(string)
 	query := d.Get("query").(map[string]interface{})
-	data_file := d.Get("data_file").(string)
+	data_file := TempFileName("shell", ".tfjson")
 
 	for k, v := range query {
 		env_vars[k] = v
