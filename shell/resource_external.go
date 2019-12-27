@@ -3,7 +3,6 @@ package shell
 import (
 	"fmt"
 	"log"
-	"os"
 
 	"github.com/hashicorp/terraform/helper/schema"
 )
@@ -70,17 +69,6 @@ func resourceExternal() *schema.Resource {
 	}
 }
 
-func convertToEnvVars(args map[string]interface{}) []string {
-	i := 0
-	vars := make([]string, len(args))
-	for key, val := range args {
-		vars[i] = fmt.Sprintf("%s=%s", key, val.(string))
-		i++
-	}
-	vars = append(vars, fmt.Sprintf("PATH=%s", os.Getenv("PATH")))
-	return vars
-}
-
 func resourceExternalCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 	env_vars := make(map[string]interface{})
@@ -140,6 +128,7 @@ func resourceExternalRead(d *schema.ResourceData, meta interface{}) error {
 
 	return nil
 }
+
 func resourceExternalUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 	env_vars := make(map[string]interface{})
@@ -164,6 +153,7 @@ func resourceExternalUpdate(d *schema.ResourceData, meta interface{}) error {
 
 	return nil
 }
+
 func resourceExternalDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 	env_vars := make(map[string]interface{})

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 	"os/exec"
 	"strings"
 	"time"
@@ -29,6 +30,17 @@ How do we handle this?
 	This way we don't need to parse the outputs from the commands:
 		'shell' vs 'external' vs 'cmd_exec'
 */
+
+func convertToEnvVars(args map[string]interface{}) []string {
+	i := 0
+	vars := make([]string, len(args))
+	for key, val := range args {
+		vars[i] = fmt.Sprintf("%s=%s", key, val.(string))
+		i++
+	}
+	vars = append(vars, fmt.Sprintf("PATH=%s", os.Getenv("PATH")))
+	return vars
+}
 
 func runCommand(programI []interface{}, workingDir string, query map[string]interface{}, id string) (map[string]interface{}, error) {
 	log.Printf("[INFO] Number of command args [%d]", len(programI))
