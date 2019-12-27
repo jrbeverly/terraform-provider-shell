@@ -34,7 +34,6 @@ func Provider() terraform.ResourceProvider {
 func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	config := Config{
 		WorkingDirectory: d.Get("working_directory").(string),
-		TempDirectory:    d.Get("tmp").(string),
 		Variables:        d.Get("variables").(map[string]interface{}),
 	}
 

@@ -82,7 +82,7 @@ func resourceExternalCreate(d *schema.ResourceData, meta interface{}) error {
 		env_vars[k] = v
 	}
 
-	result, err := runCommand(programI, workingDir, env_vars, d.Id())
+	result, err := runShellCommand(programI, workingDir, env_vars, d.Id())
 	if err != nil {
 		return fmt.Errorf("create: %s", err)
 	}
@@ -109,7 +109,7 @@ func resourceExternalRead(d *schema.ResourceData, meta interface{}) error {
 		env_vars[k] = v
 	}
 
-	result, err := runCommand(programI, workingDir, env_vars, d.Id())
+	result, err := runShellCommand(programI, workingDir, env_vars, d.Id())
 	if err != nil {
 		log.Printf("[INFO] Error occurred while retrieving resource %s", d.Id())
 		d.SetId("")
@@ -142,7 +142,7 @@ func resourceExternalUpdate(d *schema.ResourceData, meta interface{}) error {
 		env_vars[k] = v
 	}
 
-	result, err := runCommand(programI, workingDir, env_vars, d.Id())
+	result, err := runShellCommand(programI, workingDir, env_vars, d.Id())
 	if err != nil {
 		return fmt.Errorf("update: %s", err)
 	}
@@ -167,7 +167,7 @@ func resourceExternalDelete(d *schema.ResourceData, meta interface{}) error {
 		env_vars[k] = v
 	}
 
-	result, err := runCommand(programI, workingDir, env_vars, d.Id())
+	result, err := runShellCommand(programI, workingDir, env_vars, d.Id())
 	if err != nil {
 		return fmt.Errorf("delete: %s", err)
 	}

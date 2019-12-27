@@ -14,6 +14,7 @@ import (
 	"path/filepath"
 
 	"github.com/go-cmd/cmd"
+	"github.com/matryer/try"
 
 	"io/ioutil"
 )
@@ -63,7 +64,34 @@ func TempFileName(prefix, suffix string) string {
 	return filepath.Join(os.TempDir(), prefix+hex.EncodeToString(randBytes)+suffix)
 }
 
-func runCommand(programI []interface{}, workingDir string, query map[string]interface{}, id string) (map[string]interface{}, error) {
+func runShellCommand(
+	programI []interface{},
+	workingDir string,
+	query map[string]interface{},
+	id string) (map[string]interface{}, error) {
+	var result map[string]interface{}
+	err := try.Do(func(ampt int) (bool, error) {
+		var err error
+		result, err = runCmd(programI, workingDir, query, id, ampt)
+		if err != nil {
+			log.Printf("[DEBUG] retrying request: (Attempt: %d/%d, URL: %q)", ampt, 5, err)
+			time.Sleep(RetryWaitTimeInSeconds)
+		}
+		return ampt < 5, err
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func runCmd(
+	programI []interface{},
+	workingDir string,
+	query map[string]interface{},
+	id string,
+	retry int) (map[string]interface{}, error) {
 	log.Printf("[INFO] Number of command args [%d]", len(programI))
 	log.Printf("[INFO] Number of command env vars [%d]", len(query))
 	program := make([]string, len(programI))
@@ -77,10 +105,12 @@ func runCommand(programI []interface{}, workingDir string, query map[string]inte
 
 	data_file := TempFileName("shell-", ".tfjson")
 	env := convertToEnvVars(query, data_file)
+	env = append(env, fmt.Sprintf("TF_RETRY=%s", retry))
+	env = append(env, fmt.Sprintf("TF_ID=%s", id))
 
 	cmd := cmd.NewCmd(program[0], program[1:]...)
 	cmd.Dir = workingDir
-	cmd.Env = append(env, fmt.Sprintf("TF_ID=%s", id))
+	cmd.Env = env
 
 	statusChan := cmd.Start()
 
