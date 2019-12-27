@@ -4,12 +4,9 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"time"
 
 	"github.com/hashicorp/terraform/helper/schema"
 )
-
-const MaximumWaitTimeInSeconds = 5 * time.Minute
 
 func resourceExternal() *schema.Resource {
 	return &schema.Resource{

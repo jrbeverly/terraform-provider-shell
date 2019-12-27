@@ -11,6 +11,25 @@ import (
 	"github.com/go-cmd/cmd"
 )
 
+const MaximumRetryWaitTimeInSeconds = 15 * time.Minute
+const RetryWaitTimeInSeconds = 30 * time.Second
+const MaximumWaitTimeInSeconds = 5 * time.Minute
+
+/*
+Commands should be done here:
+	Underlying command for running
+	Commands for each of the lifecycle
+
+How do we handle this?
+	Pass in an environment variable to a files
+		1) Path to terraform state data
+		2) Path to output state
+	Provider directory for TMP dir
+		This is where we will write the path to items
+	This way we don't need to parse the outputs from the commands:
+		'shell' vs 'external' vs 'cmd_exec'
+*/
+
 func runCommand(programI []interface{}, workingDir string, query map[string]interface{}, id string) (map[string]interface{}, error) {
 	log.Printf("[INFO] Number of command args [%d]", len(programI))
 	log.Printf("[INFO] Number of command env vars [%d]", len(query))
