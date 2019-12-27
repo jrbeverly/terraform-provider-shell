@@ -103,6 +103,9 @@ func resourceExternalRead(d *schema.ResourceData, meta interface{}) error {
 	workingDir := d.Get("working_dir").(string)
 	query := d.Get("query").(map[string]interface{})
 
+	//Perform a touch action
+	writeInputState("here.json", []byte("hello-world"))
+
 	for k, v := range query {
 		env_vars[k] = v
 	}

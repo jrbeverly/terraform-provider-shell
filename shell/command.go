@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/go-cmd/cmd"
+
+	"io/ioutil"
 )
 
 const MaximumRetryWaitTimeInSeconds = 15 * time.Minute
@@ -30,6 +32,11 @@ How do we handle this?
 	This way we don't need to parse the outputs from the commands:
 		'shell' vs 'external' vs 'cmd_exec'
 */
+
+func writeInputState(path string, contents []byte) error {
+	err := ioutil.WriteFile(path, contents, 0644)
+	return err
+}
 
 func convertToEnvVars(args map[string]interface{}) []string {
 	i := 0
