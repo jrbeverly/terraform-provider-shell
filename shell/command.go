@@ -110,7 +110,7 @@ func (run *CmdRunner) runCmd(
 	data_file := run.TempFileName("shell-", ".tfjson")
 	env := run.convertToEnvVars(query, data_file)
 	env = append(env, fmt.Sprintf("TF_RETRY_COUNT=%d", retry))
-	env = append(env, fmt.Sprintf("TF_RETRY=%s", retry > 0))
+	env = append(env, fmt.Sprintf("TF_RETRY=%t", retry > 0))
 	env = append(env, fmt.Sprintf("TF_ID=%s", id))
 
 	cmd := cmd.NewCmd(program[0], program[1:]...)
