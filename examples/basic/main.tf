@@ -15,3 +15,4 @@ resource "shell" "default" {
 }
 
 output "id" { value = shell.default.id }
+output "outputs" { value = shell.default.result }

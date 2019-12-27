@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"strings"
 	"time"
 
 	"github.com/go-cmd/cmd"
@@ -38,7 +37,7 @@ func writeInputState(path string, contents []byte) error {
 	return err
 }
 
-func convertToEnvVars(args map[string]interface{}) []string {
+func convertToEnvVars(args map[string]interface{}, path string) []string {
 	i := 0
 	vars := make([]string, len(args))
 	for key, val := range args {
@@ -46,7 +45,28 @@ func convertToEnvVars(args map[string]interface{}) []string {
 		i++
 	}
 	vars = append(vars, fmt.Sprintf("PATH=%s", os.Getenv("PATH")))
+	vars = append(vars, fmt.Sprintf("TF_DATA_FILE=%s", path))
 	return vars
+}
+
+func readDataFile(path string) (map[string]interface{}, error) {
+	jsonFile, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+
+	byteValue, _ := ioutil.ReadAll(jsonFile)
+
+	defer jsonFile.Close()
+
+	var decoded interface{}
+	err = json.Unmarshal(byteValue, &decoded)
+	if err != nil {
+		return nil, fmt.Errorf("JSON file at %q produced invalid JSON: %s", path, err)
+	}
+
+	result := decoded.(map[string]interface{})
+	return result, nil
 }
 
 func runCommand(programI []interface{}, workingDir string, query map[string]interface{}, id string) (map[string]interface{}, error) {
@@ -61,7 +81,8 @@ func runCommand(programI []interface{}, workingDir string, query map[string]inte
 		return nil, fmt.Errorf("No command has been provided")
 	}
 
-	env := convertToEnvVars(query)
+	path := "something.data.json"
+	env := convertToEnvVars(query, path)
 
 	cmd := cmd.NewCmd(program[0], program[1:]...)
 	cmd.Dir = workingDir
@@ -84,9 +105,10 @@ func runCommand(programI []interface{}, workingDir string, query map[string]inte
 		return nil, fmt.Errorf("Timeout exception on %q", program[0])
 	}
 
-	resultJson := strings.Join(status.Stdout, " ")
-	resultJson = strings.TrimSpace(resultJson)
-	log.Printf("[INFO] result %s", resultJson)
+	for _, out := range status.Stdout {
+		log.Printf("[INFO] %s", out)
+	}
+
 	if err != nil {
 		if exitErr, ok := err.(*exec.ExitError); ok {
 			if exitErr.Stderr != nil && len(exitErr.Stderr) > 0 {
@@ -97,12 +119,6 @@ func runCommand(programI []interface{}, workingDir string, query map[string]inte
 			return nil, fmt.Errorf("failed to execute %q: %s", program[0], err)
 		}
 	}
-	var decoded interface{}
-	err = json.Unmarshal([]byte(resultJson), &decoded)
-	if err != nil {
-		return nil, fmt.Errorf("command %q produced invalid JSON: %s", program[0], err)
-	}
 
-	result := decoded.(map[string]interface{})
-	return result, nil
+	return readDataFile(path)
 }
