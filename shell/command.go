@@ -19,7 +19,6 @@ import (
 	"io/ioutil"
 )
 
-const MaximumRetryWaitTimeInSeconds = 15 * time.Minute
 const RetryWaitTimeInSeconds = 30 * time.Second
 const MaximumWaitTimeInSeconds = 5 * time.Minute
 
@@ -79,10 +78,10 @@ func (run *CmdRunner) runShellCommand(
 		var err error
 		result, err = run.runCmd(programI, workingDir, query, id, ampt)
 		if err != nil {
-			log.Printf("[DEBUG] retrying request: (Attempt: %d/%d, URL: %q)", ampt, 5, err)
+			log.Printf("[DEBUG] retrying request: (Attempt: %d/%d, URL: %q)", ampt, run.RetryMaximum, err)
 			time.Sleep(RetryWaitTimeInSeconds)
 		}
-		return ampt < 5, err
+		return ampt < run.RetryMaximum, err
 	})
 	if err != nil {
 		return nil, err
