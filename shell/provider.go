@@ -1,6 +1,9 @@
 package shell
 
 import (
+	"github.com/Brightspace/terraform-provider-shell/shell/api"
+	"os"
+
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/terraform"
 )
@@ -21,13 +24,6 @@ func Provider() terraform.ResourceProvider {
 					Type: schema.TypeString,
 				},
 			},
-			"prune": {
-				Type:     schema.TypeList,
-				Optional: true,
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
-				},
-			},
 		},
 
 		ResourcesMap: map[string]*schema.Resource{
@@ -39,16 +35,15 @@ func Provider() terraform.ResourceProvider {
 }
 
 func providerConfigure(d *schema.ResourceData) (interface{}, error) {
-	pruneRaw := d.Get("prune").([]interface{})
-	prune := make([]string, len(pruneRaw))
-	for i, vI := range pruneRaw {
-		prune[i] = vI.(string)
+	cmd := api.CmdRunner{
+		TemporaryDirectory: os.TempDir(),
+		RetryMaximum:       5,
 	}
 
 	config := Config{
 		WorkingDirectory: d.Get("working_directory").(string),
+		Runner:           cmd,
 		Variables:        d.Get("variables").(map[string]interface{}),
-		Prune:            prune,
 	}
 
 	return &config, nil
