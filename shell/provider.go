@@ -24,6 +24,11 @@ func Provider() terraform.ResourceProvider {
 					Type: schema.TypeString,
 				},
 			},
+			"max_retries": &schema.Schema{
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Description: "This is the maximum number of times an API call is retried, in the case where requests are being throttled or experiencing transient failures.",
+			},
 		},
 
 		ResourcesMap: map[string]*schema.Resource{
@@ -35,9 +40,14 @@ func Provider() terraform.ResourceProvider {
 }
 
 func providerConfigure(d *schema.ResourceData) (interface{}, error) {
+	retry_maximum := 5
+	if v, ok := d.GetOk("max_retries"); ok {
+		retry_maximum = v.(int)
+	}
+
 	cmd := api.CmdRunner{
 		TemporaryDirectory: os.TempDir(),
-		RetryMaximum:       5,
+		RetryMaximum:       retry_maximum,
 	}
 
 	config := Config{
